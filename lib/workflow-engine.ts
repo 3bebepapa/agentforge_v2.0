@@ -18,6 +18,8 @@ export interface WorkflowDefinition {
   }>
 }
 
+export type Workflow = WorkflowDefinition
+
 export class WorkflowEngine {
   private workflows: Map<string, WorkflowDefinition> = new Map()
   private executionHistory: Array<{
@@ -71,6 +73,10 @@ export class WorkflowEngine {
         return this.executeCondition(step.config, input)
       case "llm":
         return this.executeLLM(step.config, input)
+      case "start":
+        return this.executeStart(step.config, input)
+      case "end":
+        return this.executeEnd(step.config, input)
       default:
         console.log(`Unknown step type: ${step.type}`)
         return input
@@ -135,6 +141,14 @@ export class WorkflowEngine {
       model,
       timestamp: new Date().toISOString(),
     }
+  }
+
+  private async executeStart(_config: any, input: any): Promise<any> {
+    return input
+  }
+
+  private async executeEnd(_config: any, input: any): Promise<any> {
+    return input
   }
 
   saveWorkflow(workflow: WorkflowDefinition): void {
@@ -205,3 +219,186 @@ export function getWorkflowEngine(): WorkflowEngine {
 }
 
 export default WorkflowEngine
+
+/**
+ * Generate a workflow from a natural language description
+ */
+export async function generateWorkflow(description: string): Promise<WorkflowDefinition> {
+  // Simple workflow generation based on description
+  const workflowId = `workflow-${Date.now()}`
+
+  return {
+    id: workflowId,
+    name: description.slice(0, 50),
+    description: description,
+    steps: [
+      {
+        id: "step-1",
+        name: "Start",
+        type: "start",
+        config: {},
+        position: { x: 100, y: 100 },
+      },
+      {
+        id: "step-2",
+        name: "Process",
+        type: "llm",
+        config: { prompt: description },
+        position: { x: 300, y: 100 },
+      },
+      {
+        id: "step-3",
+        name: "End",
+        type: "end",
+        config: {},
+        position: { x: 500, y: 100 },
+      },
+    ],
+    connections: [
+      { from: "step-1", to: "step-2" },
+      { from: "step-2", to: "step-3" },
+    ],
+  }
+}
+
+/**
+ * Execute a workflow with given input
+ */
+export async function executeWorkflow(workflow: WorkflowDefinition, input: any = {}): Promise<any> {
+  const engine = getWorkflowEngine()
+  engine.saveWorkflow(workflow)
+  return engine.executeWorkflow(workflow.id, input)
+}
+
+/**
+ * Generate code from a workflow definition
+ */
+export function generateCode(workflow: WorkflowDefinition, language: "typescript" | "python" = "typescript"): string {
+  if (language === "python") {
+    return generatePythonCode(workflow)
+  }
+  return generateTypeScriptCode(workflow)
+}
+
+function generateTypeScriptCode(workflow: WorkflowDefinition): string {
+  const code = `
+// Generated workflow: ${workflow.name}
+// Description: ${workflow.description}
+
+export async function ${workflow.id.replace(/-/g, "_")}(input: any) {
+  let result = input;
+  
+  ${workflow.steps
+    .map((step) => {
+      if (step.type === "start" || step.type === "end") return ""
+      return `
+  // Step: ${step.name}
+  result = await executeStep_${step.id.replace(/-/g, "_")}(result);
+  `
+    })
+    .join("\n")}
+  
+  return result;
+}
+
+${workflow.steps
+  .map((step) => {
+    if (step.type === "start" || step.type === "end") return ""
+    return `
+async function executeStep_${step.id.replace(/-/g, "_")}(input: any) {
+  // Type: ${step.type}
+  // Config: ${JSON.stringify(step.config, null, 2)}
+  console.log("Executing step: ${step.name}");
+  return input; // Implement your logic here
+}
+`
+  })
+  .join("\n")}
+`
+  return code
+}
+
+function generatePythonCode(workflow: WorkflowDefinition): string {
+  const code = `
+# Generated workflow: ${workflow.name}
+# Description: ${workflow.description}
+
+async def ${workflow.id.replace(/-/g, "_")}(input):
+    result = input
+    
+    ${workflow.steps
+      .map((step) => {
+        if (step.type === "start" || step.type === "end") return ""
+        return `
+    # Step: ${step.name}
+    result = await execute_step_${step.id.replace(/-/g, "_")}(result)
+    `
+      })
+      .join("\n")}
+    
+    return result
+
+${workflow.steps
+  .map((step) => {
+    if (step.type === "start" || step.type === "end") return ""
+    return `
+async def execute_step_${step.id.replace(/-/g, "_")}(input):
+    # Type: ${step.type}
+    # Config: ${JSON.stringify(step.config, null, 2)}
+    print(f"Executing step: ${step.name}")
+    return input  # Implement your logic here
+`
+  })
+  .join("\n")}
+`
+  return code
+}
+
+/**
+ * Node executors for different workflow step types
+ */
+export const nodeExecutors = {
+  "http-request": async (config: any, input: any) => {
+    const { url, method = "GET", headers = {} } = config
+    const response = await fetch(url, {
+      method,
+      headers,
+      body: method !== "GET" ? JSON.stringify(input) : undefined,
+    })
+    return response.json()
+  },
+
+  "data-transform": async (config: any, input: any) => {
+    const { transformation } = config
+    if (transformation === "uppercase" && typeof input === "string") {
+      return input.toUpperCase()
+    }
+    if (transformation === "filter" && Array.isArray(input)) {
+      return input.filter((item) => item !== null && item !== undefined)
+    }
+    return input
+  },
+
+  condition: async (config: any, input: any) => {
+    const { condition, trueValue, falseValue } = config
+    let result = false
+    if (condition === "exists") {
+      result = input !== null && input !== undefined
+    } else if (condition === "not_empty") {
+      result = input && (typeof input !== "object" || Object.keys(input).length > 0)
+    }
+    return result ? trueValue : falseValue
+  },
+
+  llm: async (config: any, input: any) => {
+    const { prompt, model = "gpt-3.5-turbo" } = config
+    return {
+      response: `AI response to: ${prompt} with input: ${JSON.stringify(input)}`,
+      model,
+      timestamp: new Date().toISOString(),
+    }
+  },
+
+  start: async (_config: any, input: any) => input,
+  end: async (_config: any, input: any) => input,
+}
