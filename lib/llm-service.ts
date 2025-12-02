@@ -8,18 +8,20 @@ export interface LLMService {
   generateCode?: (prompt: string, language?: string) => Promise<string>
 }
 
-// Gemini 2.0 Flash 서비스 구현
-class Gemini20FlashService implements LLMService {
+// Gemini Flash 서비스 구현
+class GeminiFlashService implements LLMService {
   private apiKey: string
-  private baseUrl = "https://generativelanguage.googleapis.com/v1"
+  private baseUrl = "https://generativelanguage.googleapis.com/v1beta"
+  private model: string
 
-  constructor(apiKey: string) {
+  constructor(apiKey: string, model = "gemini-1.5-flash-latest") {
     this.apiKey = apiKey
+    this.model = model
   }
 
   async validateApiKey(): Promise<boolean> {
     try {
-      const response = await fetch(`${this.baseUrl}/models/gemini-1.5-flash:generateContent?key=${this.apiKey}`, {
+      const response = await fetch(`${this.baseUrl}/models/${this.model}:generateContent?key=${this.apiKey}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -46,7 +48,7 @@ class Gemini20FlashService implements LLMService {
 
   async generateText(prompt: string): Promise<string> {
     try {
-      const response = await fetch(`${this.baseUrl}/models/gemini-1.5-flash:generateContent?key=${this.apiKey}`, {
+      const response = await fetch(`${this.baseUrl}/models/${this.model}:generateContent?key=${this.apiKey}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -135,7 +137,7 @@ console.log(fibonacci(10)); // 55
 피보나치 수열을 계산하는 재귀 함수입니다.
 `
     } else {
-      return `질문: "${prompt}"에 대한 답변입니다. 이것은 Gemini 2.0 Flash 모델의 시뮬레이션된 응답입니다.`
+      return `질문: "${prompt}"에 대한 답변입니다. 이것은 Gemini Flash 모델의 시뮬레이션된 응답입니다.`
     }
   }
 }
@@ -144,7 +146,7 @@ console.log(fibonacci(10)); // 55
 class DefaultLLMService implements LLMService {
   async generateText(prompt: string): Promise<string> {
     await new Promise((resolve) => setTimeout(resolve, 500))
-    return "API 키가 설정되지 않았습니다. Penta AI 키를 설정하여 Gemini 2.0 Flash 모델을 사용하세요."
+    return "API 키가 설정되지 않았습니다. Penta API 키를 설정하여 Gemini Flash 모델을 사용하세요."
   }
 
   async validateApiKey(): Promise<boolean> {
@@ -159,7 +161,7 @@ class DefaultLLMService implements LLMService {
     return `
 \`\`\`${language || "javascript"}
 // API 키를 설정하세요
-console.log("Penta AI 키가 필요합니다");
+console.log("Penta API 키가 필요합니다");
 \`\`\`
 
 API 키를 설정하여 코드 생성 기능을 사용하세요.
@@ -167,18 +169,17 @@ API 키를 설정하여 코드 생성 기능을 사용하세요.
   }
 }
 
-// LLM 서비스 팩토리 함수 - 이것이 누락되었던 export입니다!
-export function getLLMService(apiKey?: string): LLMService {
+export function getLLMService(apiKey?: string, model?: string): LLMService {
   if (apiKey && apiKey.trim().length > 0) {
-    return new Gemini20FlashService(apiKey)
+    return new GeminiFlashService(apiKey, model)
   } else {
     return new DefaultLLMService()
   }
 }
 
 // 추가 export들
-export const createLLMService = (apiKey: string) => new Gemini20FlashService(apiKey)
-export { Gemini20FlashService, DefaultLLMService }
+export const createLLMService = (apiKey: string, model?: string) => new GeminiFlashService(apiKey, model)
+export { GeminiFlashService, DefaultLLMService }
 
 // 기본 export
 export default getLLMService

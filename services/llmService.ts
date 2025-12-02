@@ -9,9 +9,11 @@ interface LLMService {
 
 class GeminiService implements LLMService {
   private apiKey: string
+  private model: string
 
-  constructor(apiKey: string) {
+  constructor(apiKey: string, model = "gemini-1.5-flash-latest") {
     this.apiKey = apiKey
+    this.model = model
   }
 
   async validateApiKey(): Promise<boolean> {
@@ -21,7 +23,7 @@ class GeminiService implements LLMService {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ apiKey: this.apiKey }),
+        body: JSON.stringify({ apiKey: this.apiKey, model: this.model }),
       })
 
       const data = await response.json()
@@ -35,7 +37,7 @@ class GeminiService implements LLMService {
   async generateText(prompt: string): Promise<string> {
     try {
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${this.apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent?key=${this.apiKey}`,
         {
           method: "POST",
           headers: {
@@ -101,8 +103,8 @@ class GeminiService implements LLMService {
   }
 }
 
-export function getLLMService(apiKey: string): LLMService {
-  return new GeminiService(apiKey)
+export function getLLMService(apiKey: string, model?: string): LLMService {
+  return new GeminiService(apiKey, model)
 }
 
 export { GeminiService }

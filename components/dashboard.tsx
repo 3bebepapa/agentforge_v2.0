@@ -18,6 +18,7 @@ import { CollapsibleSidebar } from "./collapsible-sidebar"
 import { CodeBuilderInterface } from "./code-builder-interface"
 import { AIFlowInterface } from "./aiflow-interface"
 import { ProcessStudio } from "./process-studio"
+import { SettingsDialog } from "./settings-dialog"
 
 interface DashboardProps {
   apiKey?: string
@@ -27,11 +28,18 @@ interface DashboardProps {
 export function Dashboard({ apiKey = "", activeTabOverride }: DashboardProps) {
   const [activeTab, setActiveTab] = useState(activeTabOverride || "agents")
   const [error, setError] = useState<string | null>(null)
+  const [showSettings, setShowSettings] = useState(false)
+  const [currentApiKey, setCurrentApiKey] = useState(apiKey)
+
+  const handleApiKeyUpdate = (newApiKey: string, model: string) => {
+    setCurrentApiKey(newApiKey)
+    // Optionally reload components with new API key
+  }
 
   // Safely display API key with substring only if it exists and has sufficient length
   const displayApiKey =
-    apiKey && apiKey.length >= 8
-      ? `${apiKey.substring(0, 4)}...${apiKey.substring(apiKey.length - 4)}`
+    currentApiKey && currentApiKey.length >= 8
+      ? `${currentApiKey.substring(0, 4)}...${currentApiKey.substring(currentApiKey.length - 4)}`
       : "Invalid API Key"
 
   return (
@@ -49,7 +57,7 @@ export function Dashboard({ apiKey = "", activeTabOverride }: DashboardProps) {
             <History className="mr-2 h-4 w-4" />
             히스토리
           </Button>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={() => setShowSettings(true)}>
             <Settings className="mr-2 h-4 w-4" />
             설정
           </Button>
@@ -78,13 +86,13 @@ export function Dashboard({ apiKey = "", activeTabOverride }: DashboardProps) {
         <CollapsibleSidebar activeTab={activeTab} onTabChange={setActiveTab} />
 
         <div className="flex-1">
-          {activeTab === "unified" && <UnifiedInterface apiKey={apiKey} />}
-          {activeTab === "agents" && <AgentWorkspace apiKey={apiKey} />}
-          {activeTab === "components" && <ComponentAutomator apiKey={apiKey} />}
-          {activeTab === "knowledge" && <KnowledgeBase apiKey={apiKey} />}
+          {activeTab === "unified" && <UnifiedInterface apiKey={currentApiKey} />}
+          {activeTab === "agents" && <AgentWorkspace apiKey={currentApiKey} />}
+          {activeTab === "components" && <ComponentAutomator apiKey={currentApiKey} />}
+          {activeTab === "knowledge" && <KnowledgeBase apiKey={currentApiKey} />}
           {activeTab === "integrations" && <IntegrationHub />}
           {activeTab === "tenants" && <TenantManager />}
-          {activeTab === "deployment" && <DeploymentManager apiKey={apiKey} />}
+          {activeTab === "deployment" && <DeploymentManager apiKey={currentApiKey} />}
           {activeTab === "monitor" && <SystemMonitor />}
           {activeTab === "flowbuilder" && (
             <div className="flex-1 h-full">
@@ -104,6 +112,13 @@ export function Dashboard({ apiKey = "", activeTabOverride }: DashboardProps) {
           {activeTab === "aiflow" && <AIFlowInterface />}
         </div>
       </div>
+
+      <SettingsDialog
+        open={showSettings}
+        onOpenChange={setShowSettings}
+        currentApiKey={currentApiKey}
+        onApiKeyUpdate={handleApiKeyUpdate}
+      />
 
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-4 px-6">

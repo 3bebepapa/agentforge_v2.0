@@ -10,12 +10,13 @@ export interface LLMService {
   validateApiKey: () => Promise<boolean>
 }
 
-// Gemini 1.5 Flash 서비스 구현
-class Gemini15Service implements LLMService {
+class GeminiFlashService implements LLMService {
   private apiKey: string
+  private model: string
 
-  constructor(apiKey: string) {
+  constructor(apiKey: string, model = "gemini-1.5-flash-latest") {
     this.apiKey = apiKey
+    this.model = model
   }
 
   async validateApiKey(): Promise<boolean> {
@@ -37,8 +38,7 @@ class Gemini15Service implements LLMService {
 
   async generateText(prompt: string): Promise<string> {
     try {
-      // Gemini API 호출
-      const apiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${this.apiKey}`
+      const apiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent?key=${this.apiKey}`
 
       const requestBody = {
         contents: [
@@ -123,7 +123,7 @@ class Gemini15Service implements LLMService {
     } else if (prompt.toLowerCase().includes("시간")) {
       return `현재 시간은 ${new Date().toLocaleTimeString()}입니다.`
     } else if (prompt.toLowerCase().includes("도움말") || prompt.toLowerCase().includes("help")) {
-      return "저는 Gemini 1.5 Flash 모델을 기반으로 한 AI 어시스턴트입니다. 질문이나 요청에 답변해 드릴 수 있습니다."
+      return "저는 Gemini Flash 모델을 기반으로 한 AI 어시스턴트입니다. 질문이나 요청에 답변해 드릴 수 있습니다."
     } else if (prompt.includes("코드") || prompt.includes("함수") || prompt.includes("프로그래밍")) {
       return `
 function fibonacci(n) {
@@ -135,12 +135,11 @@ function fibonacci(n) {
 console.log(fibonacci(10)); // 55
 `
     } else {
-      return `질문: "${prompt}"에 대한 답변입니다. 이것은 Gemini 1.5 Flash 모델의 응답입니다.`
+      return `질문: "${prompt}"에 대한 답변입니다. 이것은 Gemini Flash 모델의 응답입니다.`
     }
   }
 }
 
-// OpenAI 서비스 구현
 class OpenAIService implements LLMService {
   private apiKey: string
 
@@ -246,8 +245,7 @@ class DefaultLLMService implements LLMService {
   }
 }
 
-// LLM 서비스 팩토리 함수
-export function getLLMService(apiKey?: string, provider = "gemini"): LLMService {
+export function getLLMService(apiKey?: string, provider = "gemini", model?: string): LLMService {
   if (!apiKey) {
     return new DefaultLLMService()
   }
@@ -257,13 +255,18 @@ export function getLLMService(apiKey?: string, provider = "gemini"): LLMService 
       return new OpenAIService(apiKey)
     case "gemini":
     default:
-      return new Gemini15Service(apiKey)
+      return new GeminiFlashService(apiKey, model || "gemini-1.5-flash-latest")
   }
 }
 
 // LLM 응답 간결화 함수
-export const generateText = async (prompt: string, apiKey?: string, provider = "gemini"): Promise<string> => {
-  const llmService = getLLMService(apiKey, provider)
+export const generateText = async (
+  prompt: string,
+  apiKey?: string,
+  provider = "gemini",
+  model?: string,
+): Promise<string> => {
+  const llmService = getLLMService(apiKey, provider, model)
   return await llmService.generateText(prompt)
 }
 
@@ -273,13 +276,14 @@ export const streamText = async (
   onChunk: (text: string) => void,
   apiKey?: string,
   provider = "gemini",
+  model?: string,
 ): Promise<void> => {
-  const llmService = getLLMService(apiKey, provider)
+  const llmService = getLLMService(apiKey, provider, model)
   await llmService.streamText(prompt, onChunk)
 }
 
 // API 키 유효성 검사 함수
-export const validateApiKey = async (apiKey: string, provider = "gemini"): Promise<boolean> => {
-  const llmService = getLLMService(apiKey, provider)
+export const validateApiKey = async (apiKey: string, provider = "gemini", model?: string): Promise<boolean> => {
+  const llmService = getLLMService(apiKey, provider, model)
   return await llmService.validateApiKey()
 }

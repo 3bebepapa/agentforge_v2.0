@@ -55,11 +55,13 @@ export function UnifiedInterface({ apiKey }: UnifiedInterfaceProps) {
   useEffect(() => {
     if (apiKey) {
       try {
-        const newOrchestrator = new AgentOrchestrator(apiKey)
+        console.log("[v0] Initializing orchestrator with API key")
+        const newOrchestrator = new AgentOrchestrator(apiKey, "gemini-1.5-flash-latest")
         setOrchestrator(newOrchestrator)
         setError(null)
+        console.log("[v0] Orchestrator initialized successfully")
       } catch (err) {
-        console.error("오케스트레이터 초기화 오류:", err)
+        console.error("[v0] 오케스트레이터 초기화 오류:", err)
         setError("오케스트레이터를 초기화하는 중 오류가 발생했습니다.")
       }
     }
@@ -836,7 +838,7 @@ export function UnifiedInterface({ apiKey }: UnifiedInterfaceProps) {
                         결과 저장하기
                       </Button>
                       <Button
-                        className="flex-1 ml-2"
+                        className="flex-1 ml-2 bg-transparent"
                         variant="outline"
                         onClick={() => {
                           // 파일 저장 후 파일 탭으로 이동

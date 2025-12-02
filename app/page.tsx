@@ -152,7 +152,7 @@ export default function Home() {
                 <X className="h-5 w-5" />
               </button>
               <CardHeader>
-                <CardTitle className="text-lg font-semibold">AI Works 키를 입력해주세요</CardTitle>
+                <CardTitle className="text-lg font-semibold">Penta API 키를 입력해주세요</CardTitle>
                 <CardDescription>AI Works를 사용하려면 유효한 API 키가 필요합니다.</CardDescription>
               </CardHeader>
               <CardContent>
@@ -190,11 +190,10 @@ interface ApiKeyInputProps {
 }
 
 const ApiKeyInput = ({ onApiKeySet }: ApiKeyInputProps) => {
-  const [apiKey, setApiKey] = useState("") // 빈 문자열로 변경
+  const [apiKey, setApiKey] = useState("AIzaSyC93tj4rYwrN2QxG_B1g0SeK1Y3hOJQxBw")
   const [isValid, setIsValid] = useState(false)
 
   const validateApiKey = (key: string) => {
-    // 기본 Gemini API 키 형식 검증 (AIza로 시작하고 39자리)
     const geminiKeyPattern = /^AIza[0-9A-Za-z_-]{35}$/
     return geminiKeyPattern.test(key)
   }
@@ -206,7 +205,7 @@ const ApiKeyInput = ({ onApiKeySet }: ApiKeyInputProps) => {
       onApiKeySet(apiKey)
     } else {
       setIsValid(false)
-      alert("올바른 Gemini API 키 형식이 아닙니다.")
+      alert("올바른 Penta API 키 형식이 아닙니다.")
     }
   }
 
@@ -216,10 +215,10 @@ const ApiKeyInput = ({ onApiKeySet }: ApiKeyInputProps) => {
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <label className="text-sm font-medium">Gemini API 키</label>
+        <label className="text-sm font-medium">Penta API 키</label>
         <Input
           type="password"
-          placeholder="Gemini API 키를 입력하세요"
+          placeholder="Penta API 키를 입력하세요"
           value={apiKey}
           onChange={(e) => setApiKey(e.target.value)}
           className="h-12"

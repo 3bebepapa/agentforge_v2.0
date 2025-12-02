@@ -31,13 +31,15 @@ export interface TaskPlan {
 // 에이전트 오케스트레이터 클래스
 export class AgentOrchestrator {
   private apiKey: string
+  private model: string
   private taskPlans: Map<string, TaskPlan>
   private activeAgents: Map<string, any>
   private componentRegistry: Map<string, any>
   private workflowRegistry: Map<string, any>
 
-  constructor(apiKey: string) {
+  constructor(apiKey: string, model = "gemini-1.5-flash-latest") {
     this.apiKey = apiKey
+    this.model = model
     this.taskPlans = new Map()
     this.activeAgents = new Map()
     this.componentRegistry = new Map()
@@ -47,7 +49,7 @@ export class AgentOrchestrator {
   // 작업 계획 생성
   async createTaskPlan(userRequest: string): Promise<string> {
     try {
-      const llmService = getLLMService(this.apiKey)
+      const llmService = getLLMService(this.apiKey, this.model)
 
       // LLM을 사용하여 작업 계획 생성
       const prompt = `
@@ -233,7 +235,7 @@ export class AgentOrchestrator {
 
   // 작업 실행 로직
   private async performTaskAction(task: Task, context: Record<string, any>): Promise<any> {
-    const llmService = getLLMService(this.apiKey)
+    const llmService = getLLMService(this.apiKey, this.model)
 
     // 작업 유형 분석
     const taskType = await this.analyzeTaskType(task.description)
@@ -283,7 +285,7 @@ JSON 형식으로만 응답해주세요.
 
   // 작업 유형 분석
   private async analyzeTaskType(description: string): Promise<string> {
-    const llmService = getLLMService(this.apiKey)
+    const llmService = getLLMService(this.apiKey, this.model)
 
     const prompt = `
 작업 설명: "${description}"
@@ -463,33 +465,6 @@ JSON 형식으로만 응답해주세요.
     }
   }
 
-  // 새로운 메서드 추가: JSON을 안전하게 파싱하는 함수
-  private parseJsonSafely(jsonString: string): any {
-    try {
-      // 먼저 일반 파싱 시도
-      return JSON.parse(jsonString)
-    } catch (error) {
-      console.warn("JSON 파싱 오류 감지, 자동 수정 시도 중...", error)
-
-      // 1. 작은따옴표를 큰따옴표로 변환
-      let fixedJson = jsonString.replace(/'/g, '"')
-
-      // 2. 객체 키에 따옴표 추가
-      fixedJson = fixedJson.replace(/([{,]\s*)([a-zA-Z0-9_$]+)(\s*:)/g, '$1"$2"$3')
-
-      // 3. 후행 쉼표 제거
-      fixedJson = fixedJson.replace(/,(\s*[\]}])/g, "$1")
-
-      try {
-        // 수정된 JSON 파싱
-        return JSON.parse(fixedJson)
-      } catch (secondError) {
-        console.error("JSON 수정 실패:", secondError)
-        throw new Error(`JSON 파싱 실패: ${error.message}`)
-      }
-    }
-  }
-
   // 분석 작업 처리
   private async handleAnalysis(task: Task, context: Record<string, any>, llmService: any): Promise<any> {
     const prompt = `
@@ -552,5 +527,32 @@ JSON 형식으로만 응답해주세요.
   // 모든 워크플로우 조회
   getAllWorkflows(): any[] {
     return Array.from(this.workflowRegistry.values())
+  }
+
+  // 새로운 메서드 추가: JSON을 안전하게 파싱하는 함수
+  private parseJsonSafely(jsonString: string): any {
+    try {
+      // 먼저 일반 파싱 시도
+      return JSON.parse(jsonString)
+    } catch (error) {
+      console.warn("JSON 파싱 오류 감지, 자동 수정 시도 중...", error)
+
+      // 1. 작은따옴표를 큰따옴표로 변환
+      let fixedJson = jsonString.replace(/'/g, '"')
+
+      // 2. 객체 키에 따옴표 추가
+      fixedJson = fixedJson.replace(/([{,]\s*)([a-zA-Z0-9_$]+)(\s*:)/g, '$1"$2"$3')
+
+      // 3. 후행 쉼표 제거
+      fixedJson = fixedJson.replace(/,(\s*[\]}])/g, "$1")
+
+      try {
+        // 수정된 JSON 파싱
+        return JSON.parse(fixedJson)
+      } catch (secondError) {
+        console.error("JSON 수정 실패:", secondError)
+        throw new Error(`JSON 파싱 실패: ${error.message}`)
+      }
+    }
   }
 }
