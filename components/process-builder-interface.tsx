@@ -116,11 +116,6 @@ export function ProcessBuilderInterface({ apiKey = "" }) {
   // 에이전트 실행 상태 관리
   const [isAgentRunning, setIsAgentRunning] = useState(false)
 
-  // API 키, DB 사용자 이름, 비밀번호를 환경 변수에서 가져오거나 기본값 설정
-  // const API_KEY = process.env.NEXT_PUBLIC_API_KEY || "YOUR_API_KEY"
-  // const DB_USER = process.env.NEXT_PUBLIC_DB_USER || "YOUR_DB_USER"
-  // const DB_PASSWORD = process.env.NEXT_PUBLIC_DB_PASSWORD || "YOUR_DB_PASSWORD"
-
   // 에이전트 워크스페이스에서 프로세스 어시스턴트 불러오기
   useEffect(() => {
     // 에이전트 중에서 프로세스 관련 에이전트 필터링
@@ -1185,21 +1180,27 @@ export function ProcessBuilderInterface({ apiKey = "" }) {
               </div>
 
               <div className="flex items-center space-x-2">
-                <Button variant="outline" size="sm" className="h-7" onClick={handleSaveNode} disabled={!selectedNode}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 bg-transparent"
+                  onClick={handleSaveNode}
+                  disabled={!selectedNode}
+                >
                   <Save className="h-3.5 w-3.5 mr-1" />
                   저장
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-7"
+                  className="h-7 bg-transparent"
                   onClick={() => handleExecuteProcess()}
                   disabled={!selectedNode || executionStatus === "running"}
                 >
                   <Play className="h-3.5 w-3.5 mr-1" />
                   실행
                 </Button>
-                <Button variant="outline" size="sm" className="h-7" onClick={toggleFlowExplorer}>
+                <Button variant="outline" size="sm" className="h-7 bg-transparent" onClick={toggleFlowExplorer}>
                   {isFlowExplorerVisible ? (
                     <ChevronLeft className="h-3.5 w-3.5" />
                   ) : (
@@ -1393,7 +1394,12 @@ export function ProcessBuilderInterface({ apiKey = "" }) {
                   <div className="border-b p-2 flex items-center justify-between bg-gray-50">
                     <div className="font-medium text-gray-700">실행 결과 미리보기</div>
                     {previewContent && (
-                      <Button variant="outline" size="sm" className="h-6" onClick={() => setPreviewContent("")}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-6 bg-transparent"
+                        onClick={() => setPreviewContent("")}
+                      >
                         초기화
                       </Button>
                     )}

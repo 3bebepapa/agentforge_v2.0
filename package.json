@@ -51,7 +51,7 @@
     "input-otp": "latest",
     "lucide-react": "^0.454.0",
     "nanoid": "latest",
-    "next": "15.2.4",
+    "next": "15.2.8",
     "next-themes": "latest",
     "react": "^19",
     "react-day-picker": "latest",
@@ -67,8 +67,8 @@
     "utf-8-validate": "latest",
     "uuid": "latest",
     "vaul": "latest",
-    "ws": "latest",
-    "zod": "^3.24.1",
+    "ws": "8.18.3",
+    "zod": "^4.0.0",
     "zustand": "latest"
   },
   "devDependencies": {
